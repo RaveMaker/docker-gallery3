@@ -1,0 +1,75 @@
+version: '3.7'
+
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    labels:
+      - "traefik.backend=${podName}-web"
+      - "traefik.frontend.rule=Host:${hostRule}"
+      - "traefik.docker.network=${podName}_frontend"
+      - "traefik.port=443"
+    networks:
+      - frontend
+      - backend
+    volumes:
+      - ./html:/var/www/html
+      - ./msmtp/msmtprc:/etc/msmtprc:ro
+      - ./ini/gallery.ini:/usr/local/etc/php/conf.d/gallery.ini:ro
+      - ./conf/apache-default:/etc/apache2/sites-available/000-default.conf:ro
+      - ./conf/ports.conf:/etc/apache2/ports.conf:ro
+
+  mariadb:
+    image: mariadb
+    restart: unless-stopped
+    networks:
+      - backend
+    labels:
+      - "traefik.enable=false"
+    environment:
+      MYSQL_DATABASE: ${dbName}
+      MYSQL_USER: ${dbUser}
+      MYSQL_PASSWORD: ${dbPass}
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - ./database:/var/lib/mysql
+
+  backup:
+    image: zeenlym/mariadb-backup
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+    networks:
+      - backend
+    labels:
+      - "traefik.enable=false"
+    environment:
+      - TIMEZONE=${timeZone}
+      - SCHEDULE=0 0 3 * *
+      - BACKUP_METHOD=mysqldump
+      - MYSQL_HOST=mariadb
+      - MYSQL_DATABASE=${dbName}
+      - MYSQL_USER=${dbUser}
+      - MYSQL_PASSWORD=${dbPass}
+    volumes:
+      - ./backup:/backup
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    networks:
+      - frontend
+      - backend
+    environment:
+      - ADMINER_DEFAULT_SERVER=mariadb
+    labels:
+      - "traefik.backend=${podName}-adminer"
+      - "traefik.frontend.rule=Host:${adminerHostRule}"
+      - "traefik.docker.network=${podName}_frontend"
+      - "traefik.port=8080"
+
+networks:
+  frontend:
+  backend:
