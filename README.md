@@ -1,4 +1,4 @@
-# Docker: Gallry3
+# Docker: Gallrey3
 Dockerfile for Gallery3 with mSMTP client, PHP7.3.
 
 docker-compose file includes:
