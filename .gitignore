@@ -1,2 +1,4 @@
 msmtp/msmtprc
-html/*
+html/
+database/
+backup/
