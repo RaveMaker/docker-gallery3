@@ -2,3 +2,4 @@ msmtp/msmtprc
 html/
 database/
 backup/
+.env
