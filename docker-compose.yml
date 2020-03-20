@@ -3,6 +3,7 @@ version: '3.7'
 services:
   web:
     build: .
+    image: ${podName}/web
     restart: always
     labels:
       - "traefik.backend=${podName}-web"
