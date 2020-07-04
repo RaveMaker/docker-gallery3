@@ -5,8 +5,9 @@ docker-compose file includes:
  - PHP7.3/Apache
  - Traefik support
  - MariaDB
- - Adminer
  - Backup
+ - Docker Swarm support
+ - Traefik v2 support
 
 ## Important
 This setup assumes your reverse proxy (Traefik/Nginx) works with https, port 443.
@@ -15,8 +16,15 @@ This setup assumes your reverse proxy (Traefik/Nginx) works with https, port 443
 1. clone the repo
 2. create `.env` file from `.env.example`
 3. create `msmtp/msmtprc` from `msmtp/msmtprc.example`
-3. Place Gallery3 in html folder
-3. create `msmtp/msmtprc` from `msmtp/msmtprc.example`
+4. Place Gallery3 in html folder
+5. create `msmtp/msmtprc` from `msmtp/msmtprc.example`
+6. copy one of the docker-compose (dev/traefik) templates to `docker-compose.yml`
+
+- to create a docker-compose.prod.yml file for docker swarm run:
+
+```
+docker-compose config > docker-compose.prod.yml
+``` 
 
 ## Network settings:
 The stack is divided into two networks, backend and frontend.

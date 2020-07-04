@@ -1,0 +1,77 @@
+version: '3.7'
+
+services:
+  web:
+    build: .
+    image: ${podName}-web
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${podName}.rule=Host(`${hostRule}`)
+      - traefik.http.routers.${podName}.entrypoints=websecure
+      - traefik.http.services.${podName}.loadbalancer.server.port=443
+      - traefik.docker.network=${podName}_frontend
+    volumes:
+      - ./html:/var/www/html
+      - ./conf/gallery.ini:/usr/local/etc/php/conf.d/gallery.ini:ro
+      - ./conf/apache-default:/etc/apache2/sites-available/000-default.conf:ro
+      - ./conf/ports.conf:/etc/apache2/ports.conf:ro
+    # Deploy block for docker swarm mode only - ignored by docker-compose
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.${podName}.rule=Host(`${hostRule}`)
+        - traefik.http.routers.${podName}.entrypoints=websecure
+        - traefik.http.services.${podName}.loadbalancer.server.port=443
+        - traefik.docker.network=${podName}_frontend
+
+  mariadb:
+    image: mariadb
+    restart: always
+    networks:
+      - backend
+    environment:
+      MYSQL_DATABASE: ${dbName}
+      MYSQL_USER: ${dbUser}
+      MYSQL_PASSWORD: ${dbPass}
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - ./database:/var/lib/mysql
+    # Deploy block for docker swarm mode only - ignored by docker-compose
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+  backup:
+    image: zeenlym/mariadb-backup
+    depends_on:
+      - mariadb
+    restart: always
+    networks:
+      - backend
+    environment:
+      - TIMEZONE=${timeZone}
+      - SCHEDULE=0 0 3 * *
+      - BACKUP_METHOD=mysqldump
+      - MYSQL_HOST=mariadb
+      - MYSQL_DATABASE=${dbName}
+      - MYSQL_USER=${dbUser}
+      - MYSQL_PASSWORD=${dbPass}
+    volumes:
+      - ./backup:/backup
+    # Deploy block for docker swarm mode only - ignored by docker-compose
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == worker]
+
+networks:
+  frontend:
+  backend:
