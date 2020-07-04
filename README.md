@@ -3,7 +3,6 @@ Dockerfile for Gallery3 with mSMTP client, PHP7.3.
 
 docker-compose file includes:
  - PHP7.3/Apache
- - Traefik support
  - MariaDB
  - Backup
  - Docker Swarm support
